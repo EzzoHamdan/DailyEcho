@@ -1,7 +1,8 @@
 const { MongoClient } = require('mongodb');
+require('dotenv').config();
 
-const uri = 'mongodb+srv://devezzham:AvD45l20L35kJ1Zw@dailyechocluster.ik19k.mongodb.net/';
-const dbName = 'quotesDB';
+const uri = process.env.MONGO_URI;
+const dbName = process.env.DB_NAME;
 
 let cachedDb = null;
 
