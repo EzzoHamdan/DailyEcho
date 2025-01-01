@@ -103,11 +103,6 @@ footer .footer-bottom label {
   font-family: 'Georgia', serif;
 }
 
-#author-text {
-  font-size: 1.5rem;
-  font-weight: 300;
-}
-
 /* Custom checkbox style */
 .container input {
   position: absolute;

@@ -64,18 +64,22 @@ window.onload = function () {
 
 async function fetchQuote() {
   try {
-    // Check if today's quote already exists in localStorage
+    // Check if the stored quote is from today
     const storedQuote = localStorage.getItem("todayQuote");
+    const today = new Date().toDateString();
 
     if (storedQuote) {
-      // Use the stored quote if available
-      const quote = JSON.parse(storedQuote);
-      document.getElementById("quote-text").textContent = quote.text;
-      document.getElementById("author-text").textContent = quote.author;
-      return;
+      const quoteData = JSON.parse(storedQuote);
+      if (quoteData.date === today) {
+        // Use the stored quote if it's from today
+        document.getElementById("quote-text").textContent = quoteData.text;
+        document.getElementById("author-text").textContent = quoteData.author;
+        adjustFontSize(quoteData.text); // Adjust font size based on quote length
+        return;
+      }
     }
 
-    // If no stored quote, fetch a new one
+    // If no stored quote or it's an old one, fetch a new one
     const selectedTypes = JSON.parse(localStorage.getItem("selectedQuoteTypes")) || [];
     let url = "http://localhost:3000/quotes";
 
@@ -98,10 +102,15 @@ async function fetchQuote() {
 
     if (quotes.length > 0) {
       const quote = quotes[Math.floor(Math.random() * quotes.length)];
-      // Store today's quote in localStorage to prevent it from changing
-      localStorage.setItem("todayQuote", JSON.stringify(quote));
+      // Store today's quote along with the date to prevent it from changing
+      localStorage.setItem("todayQuote", JSON.stringify({
+        text: quote.text,
+        author: quote.author,
+        date: today
+      }));
       document.getElementById("quote-text").textContent = quote.text;
       document.getElementById("author-text").textContent = quote.author;
+      adjustFontSize(quote.text); // Adjust font size based on quote length
     } else {
       document.getElementById("quote-text").textContent = "No quotes found.";
       document.getElementById("author-text").textContent = "";
@@ -110,3 +119,14 @@ async function fetchQuote() {
     console.error("Error fetching quote:", error);
   }
 }
+
+function adjustFontSize(quoteText) {
+  const quoteElement = document.getElementById("quote-text");
+  if (quoteText.length > 100) {
+    quoteElement.style.fontSize = "2.75rem";
+  } else {
+    quoteElement.style.fontSize = "3rem";
+  }
+}
+
+
