@@ -60,6 +60,10 @@ app.post('/quotes', async (req, res) => {
     res.status(500).json({ error: 'Failed to add new quote' });
   }
 });
+app.get('/api/config', (req, res) => {
+  res.json({ basePort: process.env.PORT });
+});
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });

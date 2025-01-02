@@ -62,6 +62,10 @@ window.onload = function () {
   fetchQuote();
 };
 
+const BASE_URL = window.location.origin.includes('localhost')
+  ? `http://localhost:${config.basePort}` 
+  : "https://dailyecho.vercel.app/"; // Replace with Vercel URL
+
 async function fetchQuote() {
   try {
     // Check if the stored quote is from today
@@ -78,10 +82,9 @@ async function fetchQuote() {
         return;
       }
     }
-
-    // If no stored quote or it's an old one, fetch a new one
+    
     const selectedTypes = JSON.parse(localStorage.getItem("selectedQuoteTypes")) || [];
-    let url = "http://localhost:3000/quotes";
+    let url = `${BASE_URL}/quotes`;
 
     if (selectedTypes.length > 0) {
       const typeValues = selectedTypes.map((id) => {
@@ -102,15 +105,18 @@ async function fetchQuote() {
 
     if (quotes.length > 0) {
       const quote = quotes[Math.floor(Math.random() * quotes.length)];
-      // Store today's quote along with the date to prevent it from changing
+      const today = new Date().toDateString();
+
+      // Store today's quote along with the date
       localStorage.setItem("todayQuote", JSON.stringify({
         text: quote.text,
         author: quote.author,
         date: today
       }));
+
       document.getElementById("quote-text").textContent = quote.text;
       document.getElementById("author-text").textContent = quote.author;
-      adjustFontSize(quote.text); // Adjust font size based on quote length
+      adjustFontSize(quote.text);
     } else {
       document.getElementById("quote-text").textContent = "No quotes found.";
       document.getElementById("author-text").textContent = "";
@@ -119,6 +125,7 @@ async function fetchQuote() {
     console.error("Error fetching quote:", error);
   }
 }
+
 
 function adjustFontSize(quoteText) {
   const quoteElement = document.getElementById("quote-text");
