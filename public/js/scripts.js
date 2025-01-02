@@ -70,7 +70,9 @@ let BASE_URL;
 async function fetchConfig() {
   try {
     const response = await fetch('/api/config');
-    const config = await response.json();
+    const configText = await response.text();
+    console.log("Config response text:", configText); // Debugging line
+    const config = JSON.parse(configText);
     BASE_URL = window.location.origin.includes('localhost')
       ? `http://localhost:${config.basePort}`
       : "https://dailyecho.vercel.app"; // Use the Vercel URL for production

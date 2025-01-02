@@ -61,7 +61,9 @@ app.post('/quotes', async (req, res) => {
   }
 });
 app.get('/api/config', (req, res) => {
-  res.json({ basePort: port });
+  const config = { basePort: port };
+  console.log("Sending config:", config); // Debugging line
+  res.json(config);
 });
 
 app.listen(port, () => {
