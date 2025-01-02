@@ -21,27 +21,27 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   .catch((err) => console.error('Failed to connect to MongoDB', err));
 // Route to get quotes from the MongoDB collection
 app.get('/quotes', async (req, res) => {
-    try {
-      const { type } = req.query; // Get the type query parameter
-  
-      const quotesCollection = db.collection('quotes');
-      let quotes;
-  
-      if (type) {
-        // Fetch quotes filtered by type
-        quotes = await quotesCollection.find({ type: parseInt(type) }).toArray();
-      } else {
-        // Fetch all quotes when no type is specified
-        quotes = await quotesCollection.find({}).toArray();
-      }
-  
-      res.json(quotes);
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to fetch quotes' });
+  try {
+    const { type } = req.query; // Get the type query parameter
+
+    const quotesCollection = db.collection('quotes');
+    let quotes;
+
+    if (type) {
+      // Fetch quotes filtered by type
+      const typesArray = type.split(',').map(Number);
+      quotes = await quotesCollection.find({ type: { $in: typesArray } }).toArray();
+    } else {
+      // Fetch all quotes when no type is specified
+      quotes = await quotesCollection.find({}).toArray();
     }
-  });  
-  
-  
+
+    res.json(quotes);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch quotes' });
+  }
+});
+
 const path = require('path');
 // Serve static files (like the HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, 'public')));

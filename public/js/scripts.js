@@ -56,15 +56,26 @@ function initializeCheckboxes() {
   }
 }
 
-// Fetch quote when page loads
-window.onload = function () {
+// Fetch configuration and quote when page loads
+window.onload = async function () {
   initializeCheckboxes();
+  await fetchConfig();
   fetchQuote();
 };
 
-const BASE_URL = window.location.origin.includes('localhost')
-  ? `http://localhost:${config.basePort}` 
-  : "https://dailyecho.vercel.app/"; // Replace with Vercel URL
+let BASE_URL;
+
+async function fetchConfig() {
+  try {
+    const response = await fetch('/api/config');
+    const config = await response.json();
+    BASE_URL = window.location.origin.includes('localhost')
+      ? `http://localhost:${config.basePort}`
+      : "https://dailyecho.vercel.app/"; // Replace with Vercel URL
+  } catch (error) {
+    console.error("Error fetching config:", error);
+  }
+}
 
 async function fetchQuote() {
   try {
@@ -125,7 +136,6 @@ async function fetchQuote() {
     console.error("Error fetching quote:", error);
   }
 }
-
 
 function adjustFontSize(quoteText) {
   const quoteElement = document.getElementById("quote-text");
