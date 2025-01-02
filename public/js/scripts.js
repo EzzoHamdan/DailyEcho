@@ -58,8 +58,10 @@ function initializeCheckboxes() {
 
 // Fetch configuration and quote when page loads
 window.onload = async function () {
+  console.log("Window loaded, initializing checkboxes and fetching config."); // Debugging line
   initializeCheckboxes();
   await fetchConfig();
+  console.log("Config fetched, BASE_URL is:", BASE_URL); // Debugging line
   fetchQuote();
 };
 
@@ -71,7 +73,8 @@ async function fetchConfig() {
     const config = await response.json();
     BASE_URL = window.location.origin.includes('localhost')
       ? `http://localhost:${config.basePort}`
-      : window.location.origin; // Use the current origin for production
+      : "https://dailyecho.vercel.app"; // Use the Vercel URL for production
+    console.log("BASE_URL set to:", BASE_URL); // Debugging line
   } catch (error) {
     console.error("Error fetching config:", error);
   }
@@ -111,6 +114,7 @@ async function fetchQuote() {
       url += `?type=${typeValues.join(",")}`;
     }
 
+    console.log("Fetching quotes from URL:", url); // Debugging line
     const response = await fetch(url);
     const quotes = await response.json();
 
