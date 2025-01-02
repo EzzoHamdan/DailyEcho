@@ -71,7 +71,7 @@ async function fetchConfig() {
     const config = await response.json();
     BASE_URL = window.location.origin.includes('localhost')
       ? `http://localhost:${config.basePort}`
-      : "https://dailyecho.vercel.app/"; // Replace with Vercel URL
+      : window.location.origin; // Use the current origin for production
   } catch (error) {
     console.error("Error fetching config:", error);
   }

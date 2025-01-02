@@ -61,7 +61,7 @@ app.post('/quotes', async (req, res) => {
   }
 });
 app.get('/api/config', (req, res) => {
-  res.json({ basePort: process.env.PORT });
+  res.json({ basePort: port });
 });
 
 app.listen(port, () => {
