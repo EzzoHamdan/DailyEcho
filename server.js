@@ -44,6 +44,11 @@ app.get('/quotes', async (req, res) => {
 
 const path = require('path');
 // Serve static files (like the HTML, CSS, JS)
+app.get('/api/config', (req, res) => {
+  const config = { basePort: port };
+  console.log("Sending config:", config); // Debugging line
+  res.json(config);
+});
 app.use(express.static(path.join(__dirname, 'public')));
 // Root route to serve the HTML page
 app.get('/', (req, res) => {
@@ -59,11 +64,6 @@ app.post('/quotes', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to add new quote' });
   }
-});
-app.get('/api/config', (req, res) => {
-  const config = { basePort: port };
-  console.log("Sending config:", config); // Debugging line
-  res.json(config);
 });
 
 app.listen(port, () => {

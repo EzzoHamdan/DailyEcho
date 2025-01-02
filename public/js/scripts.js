@@ -72,11 +72,15 @@ async function fetchConfig() {
     const response = await fetch('/api/config');
     const configText = await response.text();
     console.log("Config response text:", configText); // Debugging line
-    const config = JSON.parse(configText);
-    BASE_URL = window.location.origin.includes('localhost')
-      ? `http://localhost:${config.basePort}`
-      : "https://dailyecho.vercel.app"; // Use the Vercel URL for production
-    console.log("BASE_URL set to:", BASE_URL); // Debugging line
+    if (response.ok) {
+      const config = JSON.parse(configText);
+      BASE_URL = window.location.origin.includes('localhost')
+        ? `http://localhost:${config.basePort}`
+        : "https://dailyecho.vercel.app"; // Use the Vercel URL for production
+      console.log("BASE_URL set to:", BASE_URL); // Debugging line
+    } else {
+      console.error("Failed to fetch config:", configText);
+    }
   } catch (error) {
     console.error("Error fetching config:", error);
   }
