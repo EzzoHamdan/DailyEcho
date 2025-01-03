@@ -11,14 +11,12 @@ const dbName = process.env.DB_NAME;
 
 // MongoDB client setup
 let db;
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 async function connectToDb() {
   if (db) return db;
   try {
-    const client = await MongoClient.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await client.connect();
     db = client.db(dbName);
     console.log('Connected to MongoDB');
     return db;
@@ -37,15 +35,15 @@ const handler = async (req, res) => {
     cors()(req, res, async () => {
       if (req.method === 'GET') {
         try {
-          const { type } = req.query; // Get the type query parameter
+          const { id } = req.query; // Get the id query parameter
 
           let quotes;
-          if (type) {
-            // Fetch quotes filtered by type
-            const typesArray = type.split(',').map(Number);
-            quotes = await quotesCollection.find({ type: { $in: typesArray } }).toArray();
+          if (id) {
+            // Handle multiple ids (if they are comma-separated)
+            const idsArray = id.split(',').map(Number); // Split by comma and convert to numbers
+            quotes = await quotesCollection.find({ _id: { $in: idsArray } }).toArray();
           } else {
-            // Fetch all quotes when no type is specified
+            // Fetch all quotes when no id is specified
             quotes = await quotesCollection.find({}).toArray();
           }
 

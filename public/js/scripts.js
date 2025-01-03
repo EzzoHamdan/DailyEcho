@@ -58,33 +58,9 @@ function initializeCheckboxes() {
 
 // Fetch configuration and quote when page loads
 window.onload = async function () {
-  console.log("Window loaded, initializing checkboxes and fetching config."); // Debugging line
   initializeCheckboxes();
-  await fetchConfig();
-  console.log("Config fetched, BASE_URL is:", BASE_URL); // Debugging line
   fetchQuote();
 };
-
-let BASE_URL;
-
-async function fetchConfig() {
-  try {
-    const response = await fetch('/api/config');
-    const configText = await response.text();
-    console.log("Config response text:", configText); // Debugging line
-    if (response.ok) {
-      const config = JSON.parse(configText);
-      BASE_URL = window.location.origin.includes('localhost')
-        ? `http://localhost:${config.basePort}`
-        : "https://dailyecho.vercel.app"; 
-      console.log("BASE_URL set to:", BASE_URL); // Debugging line
-    } else {
-      console.error("Failed to fetch config:", configText);
-    }
-  } catch (error) {
-    console.error("Error fetching config:", error);
-  }
-}
 
 async function fetchQuote() {
   try {
@@ -102,31 +78,53 @@ async function fetchQuote() {
         return;
       }
     }
-    
+
+    // Check selected types and/or IDs only if needed
     const selectedTypes = JSON.parse(localStorage.getItem("selectedQuoteTypes")) || [];
-    let url = `${BASE_URL}/api/quotes`;
+    let url = `${window.location.origin}/api/quotes`;
 
+    const queryParams = [];
+
+    // Handle types filtering
     if (selectedTypes.length > 0) {
-      const typeValues = selectedTypes.map((id) => {
-        switch (id) {
-          case "abrahamic": return 1;
-          case "historical": return 2;
-          case "philosophical": return 3;
-          case "literary": return 4;
-          default: return null;
-        }
-      }).filter(Boolean);
+      const typeValues = selectedTypes
+        .map((id) => {
+          switch (id) {
+            case "abrahamic": return 1;
+            case "historical": return 2;
+            case "philosophical": return 3;
+            case "literary": return 4;
+            default: return null;
+          }
+        })
+        .filter(Boolean);
 
-      url += `?type=${typeValues.join(",")}`;
+      if (typeValues.length > 0) {
+        queryParams.push(`id=${typeValues.join(",")}`);
+      }
     }
 
-    console.log("Fetching quotes from URL:", url); // Debugging line
-    const response = await fetch(url);
-    const quotes = await response.json();
 
+    if (queryParams.length > 0) {
+      url += `?${queryParams.join("&")}`;
+    }
+
+    //console.log("Fetching quotes from URL:", url); // Debugging line
+
+    // Set timeout for fetch request to handle potential delays
+    const fetchPromise = fetch(url);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Request timed out")), 10000) // 10 seconds timeout
+    );
+
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
+    const data = await response.json();
+    //console.log(data); // Log the response to inspect its structure
+    
+    const quotes = data.flatMap(item => item.quotes);
+    
     if (quotes.length > 0) {
       const quote = quotes[Math.floor(Math.random() * quotes.length)];
-      const today = new Date().toDateString();
 
       // Store today's quote along with the date
       localStorage.setItem("todayQuote", JSON.stringify({
@@ -134,6 +132,8 @@ async function fetchQuote() {
         author: quote.author,
         date: today
       }));
+      //console.log("text:", quote.text); // Debugging line
+      //console.log("author:", quote.author); // Debugging line
 
       document.getElementById("quote-text").textContent = quote.text;
       document.getElementById("author-text").textContent = quote.author;
@@ -144,10 +144,18 @@ async function fetchQuote() {
     }
   } catch (error) {
     console.error("Error fetching quote:", error);
+    // You can show a fallback message or use the cached quote here if the fetch failed
+    document.getElementById("quote-text").textContent = "Could not fetch a quote. Please try again later.";
+    document.getElementById("author-text").textContent = "";
   }
 }
 
 function adjustFontSize(quoteText) {
+  /*if (!quoteText) {
+    console.error("Quote text is undefined or empty." + quoteText);
+    return;
+  }*/
+  
   const quoteElement = document.getElementById("quote-text");
   if (quoteText.length > 100) {
     quoteElement.style.fontSize = "2.75rem";

@@ -6,10 +6,6 @@
       "use": "@vercel/node"
     },
     {
-      "src": "api/config.js",
-      "use": "@vercel/node"
-    },
-    {
       "src": "api/index.js",
       "use": "@vercel/node"
     }
@@ -18,10 +14,6 @@
     {
       "src": "/api/quotes",
       "dest": "/api/quotes.js"
-    },
-    {
-      "src": "/api/config",
-      "dest": "/api/config.js"
     },
     {
       "src": "/(.*)",
