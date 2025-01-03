@@ -29,41 +29,48 @@ async function connectToDb() {
 }
 
 const handler = async (req, res) => {
-  const db = await connectToDb();
-  const quotesCollection = db.collection('quotes');
+  try {
+    const db = await connectToDb();
+    const quotesCollection = db.collection('quotes');
 
-  // CORS handling (You can also use Vercel's default CORS handling)
-  cors()(req, res, async () => {
-    if (req.method === 'GET') {
-      try {
-        const { type } = req.query; // Get the type query parameter
+    // CORS handling (You can also use Vercel's default CORS handling)
+    cors()(req, res, async () => {
+      if (req.method === 'GET') {
+        try {
+          const { type } = req.query; // Get the type query parameter
 
-        let quotes;
-        if (type) {
-          // Fetch quotes filtered by type
-          const typesArray = type.split(',').map(Number);
-          quotes = await quotesCollection.find({ type: { $in: typesArray } }).toArray();
-        } else {
-          // Fetch all quotes when no type is specified
-          quotes = await quotesCollection.find({}).toArray();
+          let quotes;
+          if (type) {
+            // Fetch quotes filtered by type
+            const typesArray = type.split(',').map(Number);
+            quotes = await quotesCollection.find({ type: { $in: typesArray } }).toArray();
+          } else {
+            // Fetch all quotes when no type is specified
+            quotes = await quotesCollection.find({}).toArray();
+          }
+
+          res.status(200).json(quotes);
+        } catch (err) {
+          console.error('Error fetching quotes:', err);
+          res.status(500).json({ error: 'Failed to fetch quotes' });
         }
-
-        res.status(200).json(quotes);
-      } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch quotes' });
+      } else if (req.method === 'POST') {
+        try {
+          const newQuote = req.body; // Expecting a JSON payload
+          await quotesCollection.insertOne(newQuote);
+          res.status(201).json(newQuote);
+        } catch (err) {
+          console.error('Error adding new quote:', err);
+          res.status(500).json({ error: 'Failed to add new quote' });
+        }
+      } else {
+        res.status(405).json({ error: 'Method Not Allowed' });
       }
-    } else if (req.method === 'POST') {
-      try {
-        const newQuote = req.body; // Expecting a JSON payload
-        await quotesCollection.insertOne(newQuote);
-        res.status(201).json(newQuote);
-      } catch (err) {
-        res.status(500).json({ error: 'Failed to add new quote' });
-      }
-    } else {
-      res.status(405).json({ error: 'Method Not Allowed' });
-    }
-  });
+    });
+  } catch (err) {
+    console.error('Error in handler:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
 export default handler;

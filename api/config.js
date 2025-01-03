@@ -3,7 +3,7 @@
 require('dotenv').config(); // Load environment variables
 
 const config = {
-  basePort: process.env.PORT || 3000
+  basePort: process.env.PORT
 };
 
 export default (req, res) => {
