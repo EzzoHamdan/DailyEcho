@@ -76,17 +76,13 @@ async function fetchConfig() {
       const config = JSON.parse(configText);
       BASE_URL = window.location.origin.includes('localhost')
         ? `http://localhost:${config.basePort}`
-        : "https://dailyecho.vercel.app"; // Use the Vercel URL for production
+        : "https://dailyecho.vercel.app"; 
       console.log("BASE_URL set to:", BASE_URL); // Debugging line
     } else {
       console.error("Failed to fetch config:", configText);
-      // Fallback to production URL if config fetch fails
-      BASE_URL = "https://dailyecho.vercel.app";
     }
   } catch (error) {
     console.error("Error fetching config:", error);
-    // Fallback to production URL if config fetch fails
-    BASE_URL = "https://dailyecho.vercel.app";
   }
 }
 
@@ -108,7 +104,7 @@ async function fetchQuote() {
     }
     
     const selectedTypes = JSON.parse(localStorage.getItem("selectedQuoteTypes")) || [];
-    let url = `${BASE_URL}/quotes`;
+    let url = `${BASE_URL}/api/quotes`;
 
     if (selectedTypes.length > 0) {
       const typeValues = selectedTypes.map((id) => {

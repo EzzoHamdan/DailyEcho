@@ -1,14 +1,16 @@
-const express = require('express');
-const router = express.Router();
+// /api/config.js
+
 require('dotenv').config(); // Load environment variables
 
-// Configuration data from environment variables
 const config = {
-  basePort: process.env.BASE_PORT
+  basePort: process.env.PORT || 3000
 };
 
-router.get('/', (req, res) => {
-  res.json(config);
-});
-
-module.exports = router;
+export default (req, res) => {
+  try {
+    res.status(200).json(config);
+  } catch (error) {
+    console.error('Error fetching config', error);
+    res.status(500).json({ error: 'Failed to fetch config' });
+  }
+};

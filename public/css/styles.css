@@ -24,6 +24,8 @@ body {
   height: 100%;
   background-color: #121212;
   overflow: hidden;
+  display: none;
+  opacity: 0;
 }
 
 .background-video {

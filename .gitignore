@@ -2,3 +2,4 @@
 .env
 # Ignore playground.mongodb.js
 playground.mongodb.js
+.vercel
