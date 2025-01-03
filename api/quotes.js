@@ -19,6 +19,8 @@ async function connectToDb() {
     await client.connect();
     db = client.db(dbName);
     console.log('Connected to MongoDB');
+    // Ensure indexes are created
+    await db.collection('quotes').createIndex({ _id: 1 });
     return db;
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
@@ -26,13 +28,18 @@ async function connectToDb() {
   }
 }
 
+// Connect to the database once at startup
+connectToDb().catch(console.error);
+
+// CORS handling
+const corsMiddleware = cors();
+
 const handler = async (req, res) => {
   try {
     const db = await connectToDb();
     const quotesCollection = db.collection('quotes');
 
-    // CORS handling (You can also use Vercel's default CORS handling)
-    cors()(req, res, async () => {
+    corsMiddleware(req, res, async () => {
       if (req.method === 'GET') {
         try {
           const { id } = req.query; // Get the id query parameter

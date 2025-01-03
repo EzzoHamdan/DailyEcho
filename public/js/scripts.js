@@ -1,25 +1,19 @@
 const randomCheckbox = document.getElementById("random");
 const quoteCheckboxes = document.querySelectorAll(".quote-checkbox");
+const quoteTextElement = document.getElementById("quote-text");
+const authorTextElement = document.getElementById("author-text");
 
 // Function to handle the "Random" checkbox logic
 function handleRandomCheckbox() {
-  if (randomCheckbox.checked) {
-    // Check all other checkboxes
-    quoteCheckboxes.forEach((checkbox) => {
-      checkbox.checked = true;
-    });
-  } else {
-    // Uncheck all other checkboxes
-    quoteCheckboxes.forEach((checkbox) => {
-      checkbox.checked = false;
-    });
-  }
+  const isChecked = randomCheckbox.checked;
+  quoteCheckboxes.forEach((checkbox) => {
+    checkbox.checked = isChecked;
+  });
   saveCheckboxState();
 }
 
 // Function to handle individual checkbox logic
 function handleIndividualCheckbox() {
-  // Check if all individual checkboxes are checked
   const allChecked = Array.from(quoteCheckboxes).every((checkbox) => checkbox.checked);
   randomCheckbox.checked = allChecked;
   saveCheckboxState();
@@ -47,10 +41,8 @@ function initializeCheckboxes() {
     quoteCheckboxes.forEach((checkbox) => {
       checkbox.checked = selectedTypes.includes(checkbox.id);
     });
-    // Sync the "Random" checkbox
     randomCheckbox.checked = selectedTypes.length === quoteCheckboxes.length;
   } else {
-    // If no stored preferences, default to "Random"
     randomCheckbox.checked = true;
     handleRandomCheckbox();
   }
@@ -64,28 +56,20 @@ window.onload = async function () {
 
 async function fetchQuote() {
   try {
-    // Check if the stored quote is from today
     const storedQuote = localStorage.getItem("todayQuote");
     const today = new Date().toDateString();
 
     if (storedQuote) {
       const quoteData = JSON.parse(storedQuote);
       if (quoteData.date === today) {
-        // Use the stored quote if it's from today
-        document.getElementById("quote-text").textContent = quoteData.text;
-        document.getElementById("author-text").textContent = quoteData.author;
-        adjustFontSize(quoteData.text); // Adjust font size based on quote length
+        displayQuote(quoteData.text, quoteData.author);
         return;
       }
     }
 
-    // Check selected types and/or IDs only if needed
     const selectedTypes = JSON.parse(localStorage.getItem("selectedQuoteTypes")) || [];
     let url = `${window.location.origin}/api/quotes`;
 
-    const queryParams = [];
-
-    // Handle types filtering
     if (selectedTypes.length > 0) {
       const typeValues = selectedTypes
         .map((id) => {
@@ -100,68 +84,39 @@ async function fetchQuote() {
         .filter(Boolean);
 
       if (typeValues.length > 0) {
-        queryParams.push(`id=${typeValues.join(",")}`);
+        url += `?id=${typeValues.join(",")}`;
       }
     }
 
+    const response = await Promise.race([
+      fetch(url),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Request timed out")), 20000))
+    ]);
 
-    if (queryParams.length > 0) {
-      url += `?${queryParams.join("&")}`;
-    }
-
-    //console.log("Fetching quotes from URL:", url); // Debugging line
-
-    // Set timeout for fetch request to handle potential delays
-    const fetchPromise = fetch(url);
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Request timed out")), 10000) // 10 seconds timeout
-    );
-
-    const response = await Promise.race([fetchPromise, timeoutPromise]);
     const data = await response.json();
-    //console.log(data); // Log the response to inspect its structure
-    
     const quotes = data.flatMap(item => item.quotes);
-    
+
     if (quotes.length > 0) {
       const quote = quotes[Math.floor(Math.random() * quotes.length)];
-
-      // Store today's quote along with the date
-      localStorage.setItem("todayQuote", JSON.stringify({
-        text: quote.text,
-        author: quote.author,
-        date: today
-      }));
-      //console.log("text:", quote.text); // Debugging line
-      //console.log("author:", quote.author); // Debugging line
-
-      document.getElementById("quote-text").textContent = quote.text;
-      document.getElementById("author-text").textContent = quote.author;
-      adjustFontSize(quote.text);
+      localStorage.setItem("todayQuote", JSON.stringify({ text: quote.text, author: quote.author, date: today }));
+      displayQuote(quote.text, quote.author);
     } else {
-      document.getElementById("quote-text").textContent = "No quotes found.";
-      document.getElementById("author-text").textContent = "";
+      displayQuote("No quotes found.", "");
     }
   } catch (error) {
     console.error("Error fetching quote:", error);
-    // You can show a fallback message or use the cached quote here if the fetch failed
-    document.getElementById("quote-text").textContent = "Could not fetch a quote. Please try again later.";
-    document.getElementById("author-text").textContent = "";
+    displayQuote("Could not fetch a quote. Please try again later.", "");
   }
 }
 
+function displayQuote(text, author) {
+  quoteTextElement.textContent = text;
+  authorTextElement.textContent = author;
+  adjustFontSize(text);
+}
+
 function adjustFontSize(quoteText) {
-  /*if (!quoteText) {
-    console.error("Quote text is undefined or empty." + quoteText);
-    return;
-  }*/
-  
-  const quoteElement = document.getElementById("quote-text");
-  if (quoteText.length > 100) {
-    quoteElement.style.fontSize = "2.75rem";
-  } else {
-    quoteElement.style.fontSize = "3rem";
-  }
+  quoteTextElement.style.fontSize = quoteText.length > 100 ? "2.75rem" : "3rem";
 }
 
 
