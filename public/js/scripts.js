@@ -80,9 +80,13 @@ async function fetchConfig() {
       console.log("BASE_URL set to:", BASE_URL); // Debugging line
     } else {
       console.error("Failed to fetch config:", configText);
+      // Fallback to production URL if config fetch fails
+      BASE_URL = "https://dailyecho.vercel.app";
     }
   } catch (error) {
     console.error("Error fetching config:", error);
+    // Fallback to production URL if config fetch fails
+    BASE_URL = "https://dailyecho.vercel.app";
   }
 }
 

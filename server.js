@@ -43,12 +43,11 @@ app.get('/quotes', async (req, res) => {
 });
 
 const path = require('path');
+
+const configRouter = require('./api/config');
+
 // Serve static files (like the HTML, CSS, JS)
-app.get('/api/config', (req, res) => {
-  const config = { basePort: port };
-  console.log("Sending config:", config); // Debugging line
-  res.json(config);
-});
+app.use('/api/config', configRouter);
 app.use(express.static(path.join(__dirname, 'public')));
 // Root route to serve the HTML page
 app.get('/', (req, res) => {
@@ -66,6 +65,7 @@ app.post('/quotes', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port: http://localhost:${port}`);
 });
