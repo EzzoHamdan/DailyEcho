@@ -1,15 +1,12 @@
-// /api/quotes.js
-
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-dotenv.config(); // Load environment variables
+dotenv.config();
 
 const uri = process.env.MONGO_URI;
 const dbName = process.env.DB_NAME;
 
-// MongoDB client setup
 let db;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -19,8 +16,7 @@ async function connectToDb() {
     await client.connect();
     db = client.db(dbName);
     console.log('Connected to MongoDB');
-    // Ensure indexes are created
-    await db.collection('quotes').createIndex({ _id: 1 });
+    await db.collection('quotes').createIndex({ _id: 1, type: 1 });
     return db;
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
@@ -28,53 +24,59 @@ async function connectToDb() {
   }
 }
 
-// Connect to the database once at startup
 connectToDb().catch(console.error);
 
-// CORS handling
 const corsMiddleware = cors();
 
 const handler = async (req, res) => {
   try {
-    const db = await connectToDb();
-    const quotesCollection = db.collection('quotes');
-
+    const start = Date.now();
+    
     corsMiddleware(req, res, async () => {
       if (req.method === 'GET') {
-        try {
-          const { id } = req.query; // Get the id query parameter
+        const { id } = req.query;
 
-          let quotes;
+        try {
+          const db = await connectToDb();
+          const quotesCollection = db.collection('quotes');
+          let quotes = [];
+
           if (id) {
-            // Handle multiple ids (if they are comma-separated)
-            const idsArray = id.split(',').map(Number); // Split by comma and convert to numbers
-            quotes = await quotesCollection.find({ _id: { $in: idsArray } }).toArray();
+            const idsArray = id.split(',').map(Number);
+            quotes = await quotesCollection
+              .find({ _id: { $in: idsArray } })
+              .project({ quotes: 1 })
+              .maxTimeMS(2000)
+              .toArray();
           } else {
-            // Fetch all quotes when no id is specified
-            quotes = await quotesCollection.find({}).toArray();
+            quotes = await quotesCollection
+              .find({})
+              .project({ quotes: 1 })
+              .maxTimeMS(2000)
+              .toArray();
           }
 
-          res.status(200).json(quotes);
-        } catch (err) {
-          console.error('Error fetching quotes:', err);
-          res.status(500).json({ error: 'Failed to fetch quotes' });
+          if (quotes && quotes.length > 0) {
+            const formattedQuotes = quotes.map(q => ({
+              ...q,
+              quotes: Array.isArray(q.quotes) ? q.quotes : []
+            }));
+            console.log(`Query completed in ${Date.now() - start}ms`);
+            return res.status(200).json(formattedQuotes);
+          } else {
+            return res.status(404).json({ error: 'No quotes found' });
+          }
+        } catch (dbError) {
+          console.error('Database error:', dbError);
+          return res.status(503).json({ error: 'Service temporarily unavailable' });
         }
-      } else if (req.method === 'POST') {
-        try {
-          const newQuote = req.body; // Expecting a JSON payload
-          await quotesCollection.insertOne(newQuote);
-          res.status(201).json(newQuote);
-        } catch (err) {
-          console.error('Error adding new quote:', err);
-          res.status(500).json({ error: 'Failed to add new quote' });
-        }
-      } else {
-        res.status(405).json({ error: 'Method Not Allowed' });
       }
+
+      return res.status(405).json({ error: 'Method Not Allowed' });
     });
   } catch (err) {
-    console.error('Error in handler:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Critical error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
